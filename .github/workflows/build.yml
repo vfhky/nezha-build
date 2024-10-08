@@ -18,7 +18,7 @@ jobs:
       DIST_DIR: './dist'
     steps:
       - uses: actions/checkout@v4
-     
+      
       - name: build
         uses: vmactions/freebsd-vm@v1
         with:
@@ -35,34 +35,34 @@ jobs:
             wget -O nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
             cd nezha/cmd/dashboard
             go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
-      
+      
       - name: fix dist
         run: |
           mkdir -p "${DIST_DIR}"
           cp -rf "nezha/resource" "${DIST_DIR}"
           rm "${DIST_DIR}/resource/resource.go"
           mv -f "nezha/cmd/dashboard/dashboard" "${DIST_DIR}/nezha-dashboard"
-      
+      
       - name: Prepare config.yaml
         run: |
           mkdir -p "${DIST_DIR}/data"
           cp -rf nezha/script/config.yaml "${DIST_DIR}/config.yaml"
-      
+      
       - name: Compress dist files
         run: |
           cd "${DIST_DIR}"
           zip -r "nezha-dashboard.zip" .
-      
+      
       - name: Upload artifact
         uses: actions/upload-artifact@main
         with:
           name: nezha-freebsd
           path: "${DIST_DIR}/nezha-dashboard.zip"
-      
+      
       - name: tag
         id: tag
         run: echo "release_tag=$(curl -sL https://api.github.com/repos/naiba/nezha/releases/latest | jq -r .tag_name)" >> $GITHUB_OUTPUT
-      
+      
       - name: release
         uses: softprops/action-gh-release@v1
         env:
