@@ -18,7 +18,7 @@ jobs:
       DIST_DIR: './dist'
     steps:
       - uses: actions/checkout@v4
-      
+     
       - name: build
         uses: vmactions/freebsd-vm@v1
         with:
