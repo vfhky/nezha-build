@@ -1,0 +1,67 @@
+name: Build and Release
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release'
+        required: true
+        default: 'v0.18.6'
+jobs:
+  release:
+    name: build and release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          release: 14.1
+          prepare: |
+            pkg install -y node wget curl git go121 gcc bash gawk gsed jq
+            ln -s /usr/local/bin/go121 /usr/local/bin/go
+          run: |
+            version=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
+            version_num=${version#v}
+            git clone -b ${version} https://github.com/naiba/nezha
+            rm -rf nezha/pkg/geoip/geoip.db
+            wget -O nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
+            cd nezha/cmd/dashboard
+            go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
+      - name: fix dist
+        run: |
+          dist='./dist'
+          mkdir -p "${dist}"
+          cp -rf "nezha/resource" "${dist}"
+          rm "${dist}/resource/resource.go"
+          mv -f "nezha/cmd/dashboard/dashboard" "${dist}/nezha-dashboard"
+      - name: Prepare config.yaml
+        run: |
+          dist='./dist'
+          mkdir -p "${dist}/data"
+          cp -rf nezha/script/config.yaml "${dist}/config.yaml"
+      - name: Compress dist files
+        run: |
+          dist='./dist'
+          cd "${dist}"
+          zip -r "nezha-dashboard.zip" .
+      - name: Upload artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: nezha-freebsd
+          path: |
+            dist/nezha-dashboard.zip
+      - name: tag
+        id: tag
+        run: echo "release_tag=$(curl -sL https://api.github.com/repos/naiba/nezha/releases/latest | jq -r .tag_name)" >> $GITHUB_OUTPUT
+      - name: release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.M_GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          files: |
+            dist/nezha-dashboard.zip
