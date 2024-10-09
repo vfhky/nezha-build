@@ -77,6 +77,7 @@ jobs:
 
           TEMP_DIR=$(mktemp -d)
           cp -R "${DIST_DIR}/." "$TEMP_DIR"  # 确保复制所有文件，包括隐藏文件
+          rm -rf "${DIST_DIR}/."
           echo "Checking TEMP_DIR after copying from DIST_DIR:"
           ls -l "$TEMP_DIR"
     
