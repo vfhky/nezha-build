@@ -15,7 +15,7 @@ jobs:
     name: build and release
     runs-on: ubuntu-latest
     env:
-      DIST_DIR: './dist'
+      DIST_DIR: '${{ github.workspace }}/dist'
     steps:
       - uses: actions/checkout@v4
       
@@ -85,10 +85,21 @@ jobs:
           name: nezha-freebsd
           path: "${{ env.DIST_DIR }}/nezha-dashboard.zip"
 
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v1
+      - name: Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*.zip, dist/*.tar.gz"
+          generateReleaseNotes: true
+          makeLatest: legacy
+          omitBody: false
+          omitBodyDuringUpdate: false
+          omitDraftDuringUpdate: false
+          omitName: false
+          omitNameDuringUpdate: false
+          omitPrereleaseDuringUpdate: false
+          removeArtifacts: false
+          replacesArtifacts: true
+          skipIfReleaseExists: false
+          updateOnlyUnreleased: false
         env:
           GITHUB_TOKEN: ${{ secrets.M_GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.VERSION }}
-          files: "${{ env.DIST_DIR }}/nezha-dashboard.zip"
