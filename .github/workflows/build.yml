@@ -19,6 +19,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: build
         uses: vmactions/freebsd-vm@v1
         with:
@@ -27,46 +37,52 @@ jobs:
           prepare: |
             pkg install -y node wget curl git go121 gcc bash gawk gsed jq
             ln -s /usr/local/bin/go121 /usr/local/bin/go
-          run: |
-            version=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
-            version_num=${version#v}
-            git clone -b ${version} https://github.com/naiba/nezha
-            rm -rf nezha/pkg/geoip/geoip.db
-            wget -O nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
-            cd nezha/cmd/dashboard
-            go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
-      
+        run: |
+          version=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
+          version_num=${version#v}
+          git clone -b ${version} https://github.com/naiba/nezha
+          rm -rf nezha/pkg/geoip/geoip.db
+          wget -O nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
+          cd nezha/cmd/dashboard
+          go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
+
       - name: fix dist
         run: |
           mkdir -p "${DIST_DIR}"
           cp -rf "nezha/resource" "${DIST_DIR}"
           rm "${DIST_DIR}/resource/resource.go"
           mv -f "nezha/cmd/dashboard/dashboard" "${DIST_DIR}/nezha-dashboard"
-      
+          ls -al "${DIST_DIR}"
+
       - name: Prepare config.yaml
         run: |
           mkdir -p "${DIST_DIR}/data"
           cp -rf nezha/script/config.yaml "${DIST_DIR}/config.yaml"
-      
+          ls -al "${DIST_DIR}"
+
       - name: Compress dist files
         run: |
           cd "${DIST_DIR}"
+          ls -al
           zip -r "nezha-dashboard.zip" .
-      
+          ls -al "${DIST_DIR}/nezha-dashboard.zip"
+
       - name: Upload artifact
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v3
         with:
           name: nezha-freebsd
-          path: "${DIST_DIR}/nezha-dashboard.zip"
-      
+          path: "${{ env.DIST_DIR }}/nezha-dashboard.zip"
+
       - name: tag
         id: tag
-        run: echo "release_tag=$(curl -sL https://api.github.com/repos/naiba/nezha/releases/latest | jq -r .tag_name)" >> $GITHUB_OUTPUT
-      
+        run: |
+          release_tag=$(curl -sL https://api.github.com/repos/naiba/nezha/releases/latest | jq -r .tag_name)
+          echo "release_tag=${release_tag}" >> $GITHUB_OUTPUT
+
       - name: release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.M_GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.tag.outputs.release_tag }}
-          files: "${DIST_DIR}/nezha-dashboard.zip"
+          tag_name: ${{ github.event.inputs.tag || steps.tag.outputs.release_tag }}
+          files: "${{ env.DIST_DIR }}/nezha-dashboard.zip"
