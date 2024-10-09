@@ -46,7 +46,7 @@ jobs:
           usesh: true
           release: 14.1
           prepare: |
-            pkg install -y node wget curl git go121 gcc bash gawk gsed jq
+            pkg install -y wget curl git go121 gcc bash jq node
             ln -s /usr/local/bin/go121 /usr/local/bin/go
 
       - name: Build the project
@@ -64,20 +64,16 @@ jobs:
           cp -rf "nezha/resource" "${DIST_DIR}"
           rm "${DIST_DIR}/resource/resource.go"
           mv -f "nezha/cmd/dashboard/dashboard" "${DIST_DIR}/nezha-dashboard"
-          ls -al "${DIST_DIR}"
 
       - name: Prepare config.yaml
         run: |
           mkdir -p "${DIST_DIR}/data"
-          cp -rf nezha/script/config.yaml "${DIST_DIR}/config.yaml"
-          ls -al "${DIST_DIR}"
+          cp -rf nezha/script/config.yaml "${DIST_DIR}/data/config.yaml"
 
       - name: Compress dist files
         run: |
           cd "${DIST_DIR}"
-          ls -al
           zip -r "nezha-dashboard.zip" .
-          ls -al "${DIST_DIR}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
