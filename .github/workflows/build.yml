@@ -72,15 +72,21 @@ jobs:
 
       - name: Compress dist files
         run: |
-          TEMP_DIR=$(mktemp -d)
-          cp -R "${DIST_DIR}"/* "$TEMP_DIR"
-          cd "$TEMP_DIR"
-          zip -r "${DIST_DIR}/nezha-dashboard.zip" .
-          tar -czf "${DIST_DIR}/nezha-dashboard.tar.gz" .
-          [ -d "${DIST_DIR}" ] && rm -rf "${DIST_DIR}"/*
-          \mv -f * "${DIST_DIR}"
+          echo "Checking DIST_DIR before compression:"
           ls -l "${DIST_DIR}"
-          ls -l "${TEMP_DIR}"
+
+          TEMP_DIR=$(mktemp -d)
+          cp -R "${DIST_DIR}/." "$TEMP_DIR"  # 确保复制所有文件，包括隐藏文件
+          echo "Checking TEMP_DIR after copying from DIST_DIR:"
+          ls -l "$TEMP_DIR"
+    
+          cd "$TEMP_DIR"
+          zip -qr "${DIST_DIR}/nezha-dashboard.zip" .  # 使用 -q 静默模式
+          tar -czf "${DIST_DIR}/nezha-dashboard.tar.gz" .
+
+          echo "Files in DIST_DIR after compression:"
+          ls -l "${DIST_DIR}"
+
 
       - name: Check DIST_DIR
         run: |
