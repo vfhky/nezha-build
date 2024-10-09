@@ -102,4 +102,4 @@ jobs:
           skipIfReleaseExists: false
           updateOnlyUnreleased: false
         env:
-          GITHUB_TOKEN: ${{ secrets.M_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
