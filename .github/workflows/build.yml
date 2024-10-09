@@ -79,6 +79,8 @@ jobs:
           tar -czf "${DIST_DIR}/nezha-dashboard.tar.gz" .
           [ -d "${DIST_DIR}" ] && rm -rf "${DIST_DIR}"/*
           \mv -f * "${DIST_DIR}"
+          ls -l "${DIST_DIR}"
+          ls -l "${TEMP_DIR}"
 
       - name: Check DIST_DIR
         run: |
