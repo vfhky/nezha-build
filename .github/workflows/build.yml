@@ -80,6 +80,11 @@ jobs:
           [ -d "${DIST_DIR}" ] && rm -rf "${DIST_DIR}"/*
           \mv -f * "${DIST_DIR}"
 
+      - name: Check DIST_DIR
+        run: |
+          echo "Checking contents of DIST_DIR:"
+          ls -l "${DIST_DIR}"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
