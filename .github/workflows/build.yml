@@ -88,7 +88,7 @@ jobs:
       - name: Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "dist/*.zip, dist/*.tar.gz"
+          artifacts: "${{ env.DIST_DIR }}/*.zip, ${{ env.DIST_DIR }}/*.tar.gz"
           generateReleaseNotes: true
           makeLatest: legacy
           omitBody: false
