@@ -2,13 +2,14 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch:
+      - 'v*'  # 当推送带有 'v*' 的 Tag 时自动触发
+  workflow_dispatch:  # 手动触发工作流
     inputs:
       tag:
         description: 'Tag to release'
         required: true
-        default: 'v0.18.6'
+        default: 'v0.18.6'  # 默认值，可以手动修改
+
 jobs:
   release:
     name: build and release
@@ -17,7 +18,7 @@ jobs:
       DIST_DIR: '${{ github.workspace }}/dist'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set version
         id: set_version
         run: |
@@ -27,7 +28,7 @@ jobs:
             version=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
             echo "VERSION=${version}" >> $GITHUB_ENV
           fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}"
 
       - name: Cache Go modules
         uses: actions/cache@v3
@@ -88,6 +89,7 @@ jobs:
       - name: Release
         uses: ncipollo/release-action@v1
         with:
+          tag: ${{ env.VERSION }}
           artifacts: "${{ env.DIST_DIR }}/*.zip, ${{ env.DIST_DIR }}/*.tar.gz"
           generateReleaseNotes: true
           makeLatest: legacy
