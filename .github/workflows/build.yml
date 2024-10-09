@@ -54,7 +54,7 @@ jobs:
           version_num=${VERSION#v}
           git clone -b ${VERSION} https://github.com/naiba/nezha
           rm -rf nezha/pkg/geoip/geoip.db
-          wget -O nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
+          wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
           cd nezha/cmd/dashboard
           go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
 
