@@ -9,7 +9,6 @@ on:
         description: 'Tag to release'
         required: true
         default: 'v0.18.6'
-
 jobs:
   release:
     name: build and release
@@ -72,14 +71,19 @@ jobs:
 
       - name: Compress dist files
         run: |
-          cd "${DIST_DIR}"
-          zip -r "nezha-dashboard.zip" .
+          TEMP_DIR=$(mktemp -d)
+          cp -R "${DIST_DIR}"/* "$TEMP_DIR"
+          cd "$TEMP_DIR"
+          zip -r "${DIST_DIR}/nezha-dashboard.zip" .
+          tar -czf "${DIST_DIR}/nezha-dashboard.tar.gz" .
+          [ -d "${DIST_DIR}" ] && rm -rf "${DIST_DIR}"/*
+          \mv -f * "${DIST_DIR}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: nezha-freebsd
-          path: "${{ env.DIST_DIR }}/nezha-dashboard.zip"
+          path: ${{ env.DIST_DIR }}/*
 
       - name: Release
         uses: ncipollo/release-action@v1
