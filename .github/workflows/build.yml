@@ -19,6 +19,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Set version
+        id: set_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+          else
+            version=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
+            echo "VERSION=${version}" >> $GITHUB_ENV
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
       - name: Cache Go modules
         uses: actions/cache@v3
         with:
@@ -40,9 +51,8 @@ jobs:
 
       - name: Build the project
         run: |
-          version=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
-          version_num=${version#v}
-          git clone -b ${version} https://github.com/naiba/nezha
+          version_num=${VERSION#v}
+          git clone -b ${VERSION} https://github.com/naiba/nezha
           rm -rf nezha/pkg/geoip/geoip.db
           wget -O nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
           cd nezha/cmd/dashboard
@@ -67,7 +77,7 @@ jobs:
           cd "${DIST_DIR}"
           ls -al
           zip -r "nezha-dashboard.zip" .
-          ls -al "${DIST_DIR}/nezha-dashboard.zip"
+          ls -al "${DIST_DIR}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -75,16 +85,10 @@ jobs:
           name: nezha-freebsd
           path: "${{ env.DIST_DIR }}/nezha-dashboard.zip"
 
-      - name: Get latest tag
-        id: tag
-        run: |
-          release_tag=$(curl -sL https://api.github.com/repos/naiba/nezha/releases/latest | jq -r .tag_name)
-          echo "release_tag=${release_tag}" >> $GITHUB_OUTPUT
-
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.M_GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.event.inputs.tag || steps.tag.outputs.release_tag }}
+          tag_name: ${{ env.VERSION }}
           files: "${{ env.DIST_DIR }}/nezha-dashboard.zip"
