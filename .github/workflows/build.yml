@@ -24,12 +24,20 @@ jobs:
         id: set_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+            VERSION=${{ github.event.inputs.tag }}
           else
-            version=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
-            echo "VERSION=${version}" >> $GITHUB_ENV
+            VERSION=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
           fi
-          echo "version=${VERSION}"
+
+          # 检查版本是否成功获取
+          if [ -z "${VERSION}" ]; then
+            echo "Error: VERSION could not be determined" >&2
+            exit 1
+          fi
+
+          # 打印获取到的版本号并将其存入环境变量
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Version set to: ${VERSION}"
 
       - name: Cache Go modules
         uses: actions/cache@v3
@@ -52,8 +60,14 @@ jobs:
 
       - name: Build the project
         run: |
-          version_num=${VERSION#v}
-          git clone -b ${VERSION} https://github.com/naiba/nezha
+          version_num=${{ env.VERSION#v }}
+
+          if git ls-remote --tags https://github.com/naiba/nezha | grep "refs/tags/${{ env.VERSION }}"; then
+            git clone -b ${{ env.VERSION }} https://github.com/naiba/nezha
+          else
+            echo "Error: Tag ${{ env.VERSION }} not found in naiba/nezha repository" && exit 1
+          fi
+
           rm -rf nezha/pkg/geoip/geoip.db
           wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
           cd nezha/cmd/dashboard
@@ -88,7 +102,6 @@ jobs:
 
           echo "Files in DIST_DIR after compression:"
           ls -l "${DIST_DIR}"
-
 
       - name: Check DIST_DIR
         run: |
