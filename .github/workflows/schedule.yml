@@ -3,6 +3,7 @@ name: Schedule
 on:
   schedule:
     - cron: '0 3 * * *'
+  workflow_dispatch:  # 手动触发工作流
 
 jobs:
   check_latest_tags:
