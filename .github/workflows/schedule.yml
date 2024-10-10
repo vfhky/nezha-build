@@ -1,9 +1,8 @@
-name: Check and Build
+name: Schedule
 
 on:
   schedule:
     - cron: '0 3 * * *'
-  workflow_dispatch:
 
 jobs:
   check_latest_tags:
@@ -64,6 +63,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
-          retain_days: 7
-          keep_minimum_runs: 7
+          retain_days: 5
+          keep_minimum_runs: 5
 
