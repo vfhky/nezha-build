@@ -60,7 +60,8 @@ jobs:
 
       - name: Build the project
         run: |
-          version_num=${{ env.VERSION#v }}
+          version_num=${{ env.VERSION }}
+          version_num=${version_num#v}
 
           if git ls-remote --tags https://github.com/naiba/nezha | grep "refs/tags/${{ env.VERSION }}"; then
             git clone -b ${{ env.VERSION }} https://github.com/naiba/nezha
