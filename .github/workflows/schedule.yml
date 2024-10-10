@@ -29,19 +29,22 @@ jobs:
           NEZHA_LATEST_TAG=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
           echo "NEZHA_LATEST_TAG=$NEZHA_LATEST_TAG" >> $GITHUB_ENV
 
-      - name: Compare tags and trigger build if needed
+      - name: Compare tags and set build flag
+        id: compare_tags
         run: |
           CURRENT_TAG=${{ env.CURRENT_REPO_TAG }}
           NEZHA_TAG=${{ env.NEZHA_LATEST_TAG }}
 
           if [ -z "$CURRENT_TAG" ] || [ "$CURRENT_TAG" != "$NEZHA_TAG" ]; then
             echo "Tags are different or no tag found in current repository! Triggering a new build..."
+            echo "TRIGGER_BUILD=true" >> $GITHUB_OUTPUT
           else
             echo "Tags are identical. No build needed."
-            exit 0
+            echo "TRIGGER_BUILD=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Trigger build.yml workflow
+        if: steps.compare_tags.outputs.TRIGGER_BUILD == 'true'
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
@@ -69,4 +72,3 @@ jobs:
           repository: ${{ github.repository }}
           retain_days: 5
           keep_minimum_runs: 5
-
