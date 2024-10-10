@@ -41,12 +41,15 @@ jobs:
       - name: Trigger build.yml workflow
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.PAT_TOKEN }}
           script: |
-            github.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: "build.yml",
-              ref: "main",
+            // owner: context.repo.owner,
+            // repo: context.repo.repo,
+            await github.rest.actions.createWorkflowDispatch({
+              owner: 'vfhky',
+              repo: 'nezha-build',
+              workflow_id: 'build.yml',
+              ref: 'main',
               inputs: {
                 tag: "${{ env.NEZHA_LATEST_TAG }}"
               }
