@@ -61,8 +61,7 @@ jobs:
     needs: check_latest_tags
     steps:
       - name: Cleanup old workflow runs
-        uses: AndersonFuganti/delete-workflow-runs@v2
+        uses: styfle/workflow-run-cleanup-action@0.2.2
         with:
-          retention-days: 5
-          delete-in-progress-runs: true
-          minimum-runs: 1
+          retention-days: 5  # 保留最近 5 天的 workflow 运行记录
+
