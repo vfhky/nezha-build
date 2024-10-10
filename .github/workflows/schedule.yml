@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: Checkout current repository
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Get latest tag from this repository
         id: current_repo_tag
