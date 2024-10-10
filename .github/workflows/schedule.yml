@@ -2,8 +2,8 @@ name: Daily Tag Check and Build
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # 每天凌晨 3:00 执行
-  workflow_dispatch:  # 允许手动触发
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 jobs:
   check_latest_tags:
@@ -17,31 +17,13 @@ jobs:
       - name: Get latest tag from this repository
         id: current_repo_tag
         run: |
-          # 获取本仓库最新的发布 tag
           LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1) || echo "")
-
-          # 如果没有 tag，则默认认为与 naiba/nezha 项目不一致
-          if [ -z "$LATEST_TAG" ];then
-            echo "No tags found in this repository. A build will be triggered."
-          else
-            echo "Current repository latest tag: $LATEST_TAG"
-          fi
-
           echo "CURRENT_REPO_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
       - name: Get latest tag from naiba/nezha repository
         id: nezha_repo_tag
         run: |
-          # 获取 naiba/nezha 项目最新的发布 tag
           NEZHA_LATEST_TAG=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
-
-          # 判断是否获取到了 tag
-          if [ -z "$NEZHA_LATEST_TAG" ]; then
-            echo "Error: Unable to fetch latest tag from naiba/nezha repository."
-            exit 1
-          fi
-
-          echo "naiba/nezha latest tag: $NEZHA_LATEST_TAG"
           echo "NEZHA_LATEST_TAG=$NEZHA_LATEST_TAG" >> $GITHUB_ENV
 
       - name: Compare tags and trigger build if needed
@@ -49,9 +31,6 @@ jobs:
           CURRENT_TAG=${{ env.CURRENT_REPO_TAG }}
           NEZHA_TAG=${{ env.NEZHA_LATEST_TAG }}
 
-          echo "Comparing current repository tag ($CURRENT_TAG) with naiba/nezha tag ($NEZHA_TAG)"
-
-          # 如果当前项目没有 tag，或者两个 tag 不一致，则触发构建
           if [ -z "$CURRENT_TAG" ] || [ "$CURRENT_TAG" != "$NEZHA_TAG" ]; then
             echo "Tags are different or no tag found in current repository! Triggering a new build..."
           else
@@ -65,10 +44,10 @@ jobs:
             github.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: "build.yml",  # 替换为构建工作流的文件名
-              ref: "main",  # 指定触发的分支
+              workflow_id: "build.yml",
+              ref: "main",
               inputs: {
-                tag: "${{ env.NEZHA_LATEST_TAG }}"  # 传递新的 tag 作为输入参数
+                tag: "${{ env.NEZHA_LATEST_TAG }}"
               }
             })
 
@@ -80,6 +59,6 @@ jobs:
       - name: Cleanup old workflow runs
         uses: AndersonFuganti/delete-workflow-runs@v2
         with:
-          retention-days: 5  # 保留最近 5 天的 workflow 运行记录
-          delete-in-progress-runs: true  # 删除正在运行但已经过期的 workflow 记录
-          minimum-runs: 1  # 至少保留 1 条最近的 workflow 记录
+          retention-days: 5
+          delete-in-progress-runs: true
+          minimum-runs: 1
