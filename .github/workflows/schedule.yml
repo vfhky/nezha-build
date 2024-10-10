@@ -56,12 +56,11 @@ jobs:
             })
 
   cleanup_workflow_runs:
-    name: Cleanup Old Workflow Runs
-    runs-on: ubuntu-latest
-    needs: check_latest_tags
-    steps:
-      - name: Cleanup old workflow runs
-        uses: styfle/workflow-run-cleanup-action@0.2.2
-        with:
-          retention-days: 5  # 保留最近 5 天的 workflow 运行记录
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        retain_days: 7
+        keep_minimum_runs: 7
 
