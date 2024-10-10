@@ -1,4 +1,4 @@
-name: Daily Tag Check and Build
+name: Check and Build
 
 on:
   schedule:
