@@ -36,6 +36,7 @@ jobs:
           else
             echo "Tags are identical. No build needed."
             exit 0
+          if
 
       - name: Trigger build.yml workflow
         uses: actions/github-script@v6
