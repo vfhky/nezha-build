@@ -1,8 +1,9 @@
 name: Build and Release
+
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       tag:
@@ -11,14 +12,12 @@ on:
         default: 'v0.19.20'
 
 jobs:
-  release:
-    name: build and release
+  set_version:
+    name: Set Version
     runs-on: ubuntu-latest
-    env:
-      DIST_DIR: '${{ github.workspace }}/dist'
+    outputs:
+      version: ${{ steps.set_version.outputs.VERSION }}
     steps:
-      - uses: actions/checkout@v4
-
       - name: Set version
         id: set_version
         run: |
@@ -27,16 +26,35 @@ jobs:
           else
             VERSION=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
           fi
-
-          # 检查版本是否成功获取
           if [ -z "${VERSION}" ]; then
             echo "Error: VERSION could not be determined" >&2
             exit 1
           fi
-
-          # 打印获取到的版本号并将其存入环境变量
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "::set-output name=VERSION::${VERSION}"
           echo "Version set to: ${VERSION}"
+
+  freebsd_build:
+    name: Build for FreeBSD
+    runs-on: ubuntu-latest
+    needs: set_version
+    env:
+      DIST_DIR: '${{ github.workspace }}/dist'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout nezha repository
+        uses: actions/checkout@v4
+        with:
+          repository: naiba/nezha
+          ref: ${{ needs.set_version.outputs.version }}
+          path: nezha
+
+      - name: Fetch IPInfo GeoIP Database
+        env:
+          IPINFO_TOKEN: ${{ secrets.IPINFO_TOKEN }}
+        run: |
+          rm -rf nezha/pkg/geoip/geoip.db
+          wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${IPINFO_TOKEN}
 
       - name: Cache Go modules
         uses: actions/cache@v3
@@ -59,17 +77,8 @@ jobs:
 
       - name: Build the project
         run: |
-          version_num=${{ env.VERSION }}
+          version_num=${{ needs.set_version.outputs.version }}
           version_num=${version_num#v}
-
-          if git ls-remote --tags https://github.com/naiba/nezha | grep "refs/tags/${{ env.VERSION }}"; then
-            git clone -b ${{ env.VERSION }} https://github.com/naiba/nezha
-          else
-            echo "Error: Tag ${{ env.VERSION }} not found in naiba/nezha repository" && exit 1
-          fi
-
-          rm -rf nezha/pkg/geoip/geoip.db
-          wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
           cd nezha/cmd/dashboard
           go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
 
@@ -87,38 +96,99 @@ jobs:
 
       - name: Compress dist files
         run: |
-          echo "111Checking DIST_DIR before compression:"
-
           TEMP_DIR=$(mktemp -d)
-          cp -R "${DIST_DIR}/." "$TEMP_DIR"  # 确保复制所有文件，包括隐藏文件
+          cp -R "${DIST_DIR}/." "$TEMP_DIR"
           rm -rf "${DIST_DIR}"/*
-          ls -l "${DIST_DIR}"
-          echo "Checking TEMP_DIR after copying from DIST_DIR:"
-          ls -l "$TEMP_DIR"
-    
           cd "$TEMP_DIR"
-          zip -qr "${DIST_DIR}/nezha-dashboard.zip" .  # 使用 -q 静默模式
-          tar -czf "${DIST_DIR}/nezha-dashboard.tar.gz" .
+          zip -qr "${DIST_DIR}/dashboard-freebsd-amd64.zip" .
+          tar -czf "${DIST_DIR}/dashboard-freebsd-amd64.tar.gz" .
 
-          echo "Files in DIST_DIR after compression:"
-          ls -l "${DIST_DIR}"
-
-      - name: Check DIST_DIR
-        run: |
-          echo "Checking contents of DIST_DIR:"
-          ls -l "${DIST_DIR}"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload artifact for FreeBSD
+        uses: actions/upload-artifact@v4
         with:
           name: nezha-freebsd
           path: ${{ env.DIST_DIR }}/*
 
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        goos: [linux, windows]
+        goarch: [amd64]
+        include:
+          - goos: linux
+            goarch: s390x
+          - goos: linux
+            goarch: arm64
+            
+    name: Build other platforms
+    runs-on: ubuntu-latest
+    needs: set_version
+    container:
+      image: goreleaser/goreleaser-cross:v1.21
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      GOARM: ${{ matrix.goarm }}
+      DIST_DIR: '${{ github.workspace }}/dist'
+    steps:
+      - name: Checkout nezha repository
+        uses: actions/checkout@v4
+        with:
+          repository: naiba/nezha
+          ref: ${{ needs.set_version.outputs.version }}  # 使用从 set_version 传递的版本号
+          path: nezha
+
+      - name: Fetch IPInfo GeoIP Database
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+        env:
+          IPINFO_TOKEN: ${{ secrets.IPINFO_TOKEN }}
+        run: |
+          rm -rf nezha/pkg/geoip/geoip.db
+          wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${IPINFO_TOKEN}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21.x"
+
+      - name: Build for other platforms
+        working-directory: nezha/cmd/dashboard
+        run: |
+          go build -o ${{ env.DIST_DIR }}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }} -ldflags="-s -w"
+
+      - name: Upload artifacts for other platforms
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ${{ env.DIST_DIR }}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}
+
+  release:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    needs: [freebsd_build, build]
+    name: Release
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./assets
+
+      - name: Archive and compress binaries
+        run: |
+          for file in assets/*/*; do
+            if [ -f "$file" ]; then
+              chmod +x "$file"
+              export fileWithoutExt=${file%.*}
+              zip -jr "$fileWithoutExt.zip" "$file"
+            fi
+          done
+
       - name: Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ env.VERSION }}
-          artifacts: "${{ env.DIST_DIR }}/*.zip, ${{ env.DIST_DIR }}/*.tar.gz"
+          tag: ${{ needs.set_version.outputs.version }}
+          artifacts: "assets/*/*/*.zip"
           generateReleaseNotes: true
           makeLatest: legacy
           omitBody: false
