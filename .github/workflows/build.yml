@@ -72,7 +72,7 @@ jobs:
           usesh: true
           release: 14.1
           prepare: |
-            pkg install -y wget curl git go121 gcc bash jq node
+            pkg install -y wget curl git go121 gcc bash jq node zip
             ln -s /usr/local/bin/go121 /usr/local/bin/go
 
       - name: Build the project
@@ -82,15 +82,12 @@ jobs:
           cd nezha/cmd/dashboard
           go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
 
-      - name: Fix dist
+      - name: Prepare dist directory
         run: |
           mkdir -p "${DIST_DIR}"
           cp -rf "nezha/resource" "${DIST_DIR}"
           rm "${DIST_DIR}/resource/resource.go"
           mv -f "nezha/cmd/dashboard/dashboard" "${DIST_DIR}/nezha-dashboard"
-
-      - name: Prepare config.yaml
-        run: |
           mkdir -p "${DIST_DIR}/data"
           cp -rf nezha/script/config.yaml "${DIST_DIR}/data/config.yaml"
 
@@ -106,31 +103,32 @@ jobs:
       - name: Upload artifact for FreeBSD
         uses: actions/upload-artifact@v4
         with:
-          name: nezha-freebsd
-          path: ${{ env.DIST_DIR }}/*
+          name: dashboard-freebsd-amd64
+          path: |
+            ${{ env.DIST_DIR }}/*
 
   build:
     strategy:
       fail-fast: true
       matrix:
-        goos: [linux, windows]
-        goarch: [amd64]
         include:
           - goos: linux
-            goarch: s390x
+            goarch: amd64
           - goos: linux
             goarch: arm64
+          - goos: linux
+            goarch: s390x
+          - goos: windows
+            goarch: amd64
             
     name: Build other platforms
     runs-on: ubuntu-latest
     needs: set_version
-    container:
-      image: goreleaser/goreleaser-cross:v1.21
     env:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
-      GOARM: ${{ matrix.goarm }}
       DIST_DIR: '${{ github.workspace }}/dist'
+
     steps:
       - name: Checkout nezha repository
         uses: actions/checkout@v4
@@ -139,18 +137,23 @@ jobs:
           ref: ${{ needs.set_version.outputs.version }}
           path: nezha
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21.x"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip
+
       - name: Fetch IPInfo GeoIP Database
         if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
         env:
           IPINFO_TOKEN: ${{ secrets.IPINFO_TOKEN }}
         run: |
-          rm -rf nezha/pkg/geoip/geoip.db
-          wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${IPINFO_TOKEN}
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.21.x"
+          rm -rf pkg/geoip/geoip.db
+          wget -qO pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${IPINFO_TOKEN}
 
       - name: Build for other platforms
         working-directory: nezha/cmd/dashboard
