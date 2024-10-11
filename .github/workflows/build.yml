@@ -30,7 +30,7 @@ jobs:
             echo "Error: VERSION could not be determined" >&2
             exit 1
           fi
-          echo "::set-output name=VERSION::${VERSION}"
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           echo "Version set to: ${VERSION}"
 
   freebsd_build:
@@ -136,7 +136,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: naiba/nezha
-          ref: ${{ needs.set_version.outputs.version }}  # 使用从 set_version 传递的版本号
+          ref: ${{ needs.set_version.outputs.version }}
           path: nezha
 
       - name: Fetch IPInfo GeoIP Database
@@ -155,13 +155,30 @@ jobs:
       - name: Build for other platforms
         working-directory: nezha/cmd/dashboard
         run: |
-          go build -o ${{ env.DIST_DIR }}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }} -ldflags="-s -w"
+          version_num=${{ needs.set_version.outputs.version }}
+          version_num=${version_num#v}
+          go build -ldflags="-s -w -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
+
+      - name: Prepare dist directory
+        run: |
+          cp -rf nezha/resource "${DIST_DIR}"
+          rm "${DIST_DIR}/resource/resource.go"
+          mkdir -p "${DIST_DIR}/data"
+          cp -rf nezha/script/config.yaml "${DIST_DIR}/data/config.yaml"
+
+      - name: Compress dist files
+        run: |
+          cd "${DIST_DIR}"
+          zip -qr "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip" .
+          tar -czf "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz" .
 
       - name: Upload artifacts for other platforms
         uses: actions/upload-artifact@v4
         with:
           name: dashboard-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: ${{ env.DIST_DIR }}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            ${{ env.DIST_DIR }}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip
+            ${{ env.DIST_DIR }}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
 
   release:
     runs-on: ubuntu-latest
@@ -174,21 +191,11 @@ jobs:
         with:
           path: ./assets
 
-      - name: Archive and compress binaries
-        run: |
-          for file in assets/*/*; do
-            if [ -f "$file" ]; then
-              chmod +x "$file"
-              export fileWithoutExt=${file%.*}
-              zip -jr "$fileWithoutExt.zip" "$file"
-            fi
-          done
-
       - name: Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ needs.set_version.outputs.version }}
-          artifacts: "assets/*/*/*.zip"
+          artifacts: "assets/*/*.{zip,tar.gz}"
           generateReleaseNotes: true
           makeLatest: legacy
           omitBody: false
