@@ -1,15 +1,14 @@
 name: Build and Release
 on:
-  workflow_call:  # 添加这一行使工作流可重用
   push:
     tags:
-      - 'v*'  # 当推送带有 'v*' 的 Tag 时自动触发
-  workflow_dispatch:  # 手动触发工作流
+      - 'v*'
+  workflow_dispatch:
     inputs:
       tag:
         description: 'Tag to release'
         required: true
-        default: 'v0.19.18'  # 默认值，可以手动修改
+        default: 'v0.19.20'
 
 jobs:
   release:
