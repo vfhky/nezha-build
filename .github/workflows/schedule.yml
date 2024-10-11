@@ -30,12 +30,19 @@ jobs:
 
       - name: Trigger build workflow
         if: env.TRIGGER_BUILD == 'true'
-        uses: peter-evans/repository-dispatch@v3
+        uses: actions/github-script@v6
         with:
-          token: ${{ secrets.PAT_TOKEN }}
-          repository: ${{ github.repository }}
-          event-type: release
-          client-payload: '{"tag": "${{ env.NEZHA_LATEST_TAG }}"}'
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'build.yml',
+              ref: 'main',
+              inputs: {
+                tag: "${{ env.NEZHA_LATEST_TAG }}"
+              }
+            })
 
   cleanup_runs:
     name: Cleanup Old Workflow Runs
