@@ -161,16 +161,21 @@ jobs:
 
       - name: Prepare dist directory
         run: |
+          mkdir -p "${DIST_DIR}"
           cp -rf nezha/resource "${DIST_DIR}"
           rm "${DIST_DIR}/resource/resource.go"
           mkdir -p "${DIST_DIR}/data"
           cp -rf nezha/script/config.yaml "${DIST_DIR}/data/config.yaml"
+          mv -f nezha/cmd/dashboard/dashboard "${DIST_DIR}/nezha-dashboard"
 
       - name: Compress dist files
         run: |
-          cd "${DIST_DIR}"
-          zip -qr "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip" .
-          tar -czf "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz" .
+          TEMP_DIR=$(mktemp -d)
+          cp -R "${DIST_DIR}/." "$TEMP_DIR"
+          rm -rf "${DIST_DIR}"/*
+          cd "$TEMP_DIR"
+          zip -qr "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip" .
+          tar -czf "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz" .
 
       - name: Upload artifacts for other platforms
         uses: actions/upload-artifact@v4
