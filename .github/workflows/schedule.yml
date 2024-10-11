@@ -2,8 +2,8 @@ name: Schedule
 
 on:
   schedule:
-    - cron: '0 1 * * *'
-  workflow_dispatch:  # 手动触发工作流
+    - cron: '0 19 * * *'
+  workflow_dispatch:
 
 jobs:
   check_latest_tags:
