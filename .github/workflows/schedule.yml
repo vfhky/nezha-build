@@ -34,7 +34,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_TOKEN }}
           repository: ${{ github.repository }}
-          event-type: trigger-build
+          event-type: release
           client-payload: '{"tag": "${{ env.NEZHA_LATEST_TAG }}"}'
 
   cleanup_runs:
