@@ -151,11 +151,12 @@ jobs:
         env:
           IPINFO_TOKEN: ${{ secrets.IPINFO_TOKEN }}
         run: |
-          rm -rf nezha/pkg/geoip/geoip.db
-          wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${IPINFO_TOKEN}
+          ls -all
+          rm -rf pkg/geoip/geoip.db
+          wget -qO pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${IPINFO_TOKEN}
 
       - name: Build for other platforms
-        working-directory: nezha/cmd/dashboard
+        working-directory: cmd/dashboard
         run: |
           version_num=${{ needs.set_version.outputs.version }}
           version_num=${version_num#v}
@@ -164,11 +165,11 @@ jobs:
       - name: Prepare dist directory
         run: |
           mkdir -p "${DIST_DIR}"
-          cp -rf nezha/resource "${DIST_DIR}"
+          cp -rf resource "${DIST_DIR}"
           rm "${DIST_DIR}/resource/resource.go"
           mkdir -p "${DIST_DIR}/data"
-          cp -rf nezha/script/config.yaml "${DIST_DIR}/data/config.yaml"
-          mv -f nezha/cmd/dashboard/dashboard "${DIST_DIR}/nezha-dashboard"
+          cp -rf script/config.yaml "${DIST_DIR}/data/config.yaml"
+          mv -f cmd/dashboard/dashboard "${DIST_DIR}/nezha-dashboard"
 
       - name: Compress dist files
         run: |
