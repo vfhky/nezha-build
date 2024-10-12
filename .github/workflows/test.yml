@@ -1,0 +1,84 @@
+name: Build Nezha
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [linux, windows]
+        goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
+
+    runs-on: ubuntu-latest
+    container:
+      image: goreleaser/goreleaser-cross:v1.21
+
+    steps:
+    - name: Checkout nezha repository
+      uses: actions/checkout@v4
+      with:
+        repository: naiba/nezha
+        path: nezha
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21.x'
+
+    - name: Build
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+      run: |
+        cd nezha
+        go build -o nezha-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/...
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nezha-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: nezha/nezha-${{ matrix.goos }}-${{ matrix.goarch }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.sha }}
+        release_name: Release ${{ github.sha }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Assets
+      run: |
+        for file in artifacts/*/*; do
+          if [ -f "$file" ]; then
+            asset_name=$(basename $file)
+            asset_path=$file
+            curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                 -H "Content-Type: application/octet-stream" \
+                 --data-binary @"$asset_path" \
+                 "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=$asset_name"
+          fi
+        done
