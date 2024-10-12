@@ -45,6 +45,9 @@ jobs:
     - name: Fetch tags
       run: |
         git fetch --tags
+        echo "===============0.0================"
+        pwd
+        echo "===============0.0================"
         ls -all .
 
     - name: Fetch IPInfo GeoIP Database
@@ -81,6 +84,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Release
     
     steps:
     - name: Download artifacts
