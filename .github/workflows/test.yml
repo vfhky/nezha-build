@@ -21,22 +21,25 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: goreleaser/goreleaser-cross:v1.21
-   
+    
     env:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
 
     steps:
+    - name: Set up Git
+      run: |
+        git config --global --add safe.directory /__w/nezha-build/nezha-build
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
     - name: Checkout nezha repository
       uses: actions/checkout@v4
       with:
         repository: naiba/nezha
         fetch-depth: 0
 
-    - name: Set up Git
-      run: |
-        git config --global --add safe.directory /__w/your-repo-name/your-repo-name
-        git fetch --tags
+    - name: Fetch tags
+      run: git fetch --tags
 
     - name: Set up Go
       uses: actions/setup-go@v5
@@ -60,6 +63,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
     steps:
     - name: Download artifacts
       uses: actions/download-artifact@v4
