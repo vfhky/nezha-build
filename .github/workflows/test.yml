@@ -20,7 +20,6 @@ jobs:
           - goos: linux
             goarch: arm64
 
-
     runs-on: ubuntu-latest
     container:
       image: goreleaser/goreleaser-cross:v1.21
@@ -73,6 +72,17 @@ jobs:
         distribution: goreleaser
         version: '~> v2'
         args: build --single-target --clean --skip=validate
+
+    - name: Prepare dist directory
+      env:
+        DIST_DIR: ./dist
+      run: |
+        mkdir -p "${DIST_DIR}"
+        cp -rf "nezha/resource" "${DIST_DIR}"
+        rm "${DIST_DIR}/resource/resource.go"
+        mv -f "nezha/cmd/dashboard/dashboard" "${DIST_DIR}/nezha-dashboard"
+        mkdir -p "${DIST_DIR}/data"
+        cp -rf nezha/script/config.yaml "${DIST_DIR}/data/config.yaml"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
