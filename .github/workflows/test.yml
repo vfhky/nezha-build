@@ -59,8 +59,7 @@ jobs:
         rm pkg/geoip/geoip.db
         wget -qO pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${IPINFO_TOKEN}
         echo "===============1================"
-        ls -all ${{ github.workspace }}
-        echo "===============2================"
+        pwd
         ls -all .
 
     - name: Set up Go
