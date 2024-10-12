@@ -77,20 +77,33 @@ jobs:
       env:
         DIST_DIR: ./dist
       run: |
-        ls -all  .
-        mkdir -p "${DIST_DIR}"
-        cp -rf "resource" "${DIST_DIR}"
-        rm "${DIST_DIR}/resource/resource.go"
-        mkdir -p "${DIST_DIR}/data"
-        cp -rf script/config.yaml "${DIST_DIR}/data/config.yaml"
-        ls  -all  ./dist
+        ls -all "${DIST_DIR}"
+        find . -type f
+
+        mkdir -p "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/data"
+        cp -rf script/config.yaml "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/data/config.yaml"
+
+        cp -rf resource "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/resource"
+        rm -rf "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/resource/resource.go"
+
+        # Copy built binary
+        cp -rf ./dist/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/* "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/"
+
+        chmod +x "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}"
+
+        ls -all "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}"
+
+    - name: Compress artifacts into zip
+      run: |
+        cd "${DIST_DIR}"
+        zip -r "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip" "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}"
+        ls -all "${DIST_DIR}"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: dashboard-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: |
-          ./dist/*/*
+        name: dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip
+        path: ./dist/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip
 
   release:
     needs: build
@@ -104,18 +117,8 @@ jobs:
       with:
         path: ./assets
 
-    - name: Archive and compress binaries
-      run: |
-        for file in assets/*/*/*; do
-          if [ -f "$file" ]; then
-            chmod +x "$file"
-            export fileWithoutExt=${file%.*}
-            zip -jr "$fileWithoutExt.zip" "$file"
-          fi
-        done
-
     - name: Release
       uses: ncipollo/release-action@v1
       with:
-        artifacts: "assets/*/*/*.zip"
+        artifacts: "assets/*.zip"
         generateReleaseNotes: true
