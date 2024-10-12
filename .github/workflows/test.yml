@@ -78,11 +78,11 @@ jobs:
         DIST_DIR: ./dist
       run: |
         mkdir -p "${DIST_DIR}"
-        cp -rf "nezha/resource" "${DIST_DIR}"
+        cp -rf "resource" "${DIST_DIR}"
         rm "${DIST_DIR}/resource/resource.go"
-        mv -f "nezha/cmd/dashboard/dashboard" "${DIST_DIR}/nezha-dashboard"
+        mv -f "cmd/dashboard/dashboard" "${DIST_DIR}/nezha-dashboard"
         mkdir -p "${DIST_DIR}/data"
-        cp -rf nezha/script/config.yaml "${DIST_DIR}/data/config.yaml"
+        cp -rf script/config.yaml "${DIST_DIR}/data/config.yaml"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
