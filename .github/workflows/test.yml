@@ -73,6 +73,11 @@ jobs:
         version: '~> v2'
         args: build --single-target --clean --skip=validate
 
+    - name: Install zip
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y zip
+
     - name: Prepare dist directory
       env:
         DIST_DIR: ./dist
