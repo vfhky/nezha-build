@@ -104,7 +104,7 @@ jobs:
     - name: Compress artifacts into zip
       run: |
         cd "${DIST_DIR}"
-        zip -r "dist-${{ matrix.goos }}-${{ matrix.goarch }}.zip" "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}"
+        zip -r "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip" "dist-${{ matrix.goos }}-${{ matrix.goarch }}"
         ls -all "${DIST_DIR}"
 
     - name: Upload artifacts
