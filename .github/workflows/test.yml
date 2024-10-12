@@ -75,8 +75,8 @@ jobs:
 
     - name: Install zip
       run: |
-        sudo apt-get update
-        sudo apt-get install -y zip
+        apt-get update
+        apt-get install -y zip
 
     - name: Prepare dist directory
       env:
