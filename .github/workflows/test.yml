@@ -77,26 +77,34 @@ jobs:
       env:
         DIST_DIR: ./dist
       run: |
+        # 列出 dist 目录
         ls -all "${DIST_DIR}"
         find . -type f
 
-        mkdir -p "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/data"
-        cp -rf script/config.yaml "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/data/config.yaml"
+        # 查找并复制构建生成的二进制文件
+        BINARY_PATH=$(find ./dist -type f -name "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}" | head -n 1)
 
-        cp -rf resource "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/resource"
-        rm -rf "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/resource/resource.go"
+        # 创建 dashboard 目录
+        mkdir -p "${DIST_DIR}/dist-${{ matrix.goos }}-${{ matrix.goarch }}/data"
 
-        # Copy built binary
-        cp -rf ./dist/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/* "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/"
+        # 复制 resource 目录，排除 resource.go
+        cp -rf resource "${DIST_DIR}/dist-${{ matrix.goos }}-${{ matrix.goarch }}/resource"
+        rm -rf "${DIST_DIR}/dist-${{ matrix.goos }}-${{ matrix.goarch }}/resource/resource.go"
 
-        chmod +x "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}"
+        # 复制 config.yaml 文件
+        cp -rf script/config.yaml "${DIST_DIR}/dist-${{ matrix.goos }}-${{ matrix.goarch }}/data/config.yaml"
+        cp -rf "$BINARY_PATH" "${DIST_DIR}/dist-${{ matrix.goos }}-${{ matrix.goarch }}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}"
 
-        ls -all "${DIST_DIR}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}"
+        # 设置二进制文件可执行权限
+        chmod +x "${DIST_DIR}/dist-${{ matrix.goos }}-${{ matrix.goarch }}/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}"
+
+        # 列出目录内容
+        ls -all "${DIST_DIR}/dist-${{ matrix.goos }}-${{ matrix.goarch }}"
 
     - name: Compress artifacts into zip
       run: |
         cd "${DIST_DIR}"
-        zip -r "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip" "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}"
+        zip -r "dist-${{ matrix.goos }}-${{ matrix.goarch }}.zip" "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}"
         ls -all "${DIST_DIR}"
 
     - name: Upload artifacts
