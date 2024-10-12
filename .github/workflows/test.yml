@@ -43,7 +43,9 @@ jobs:
         fetch-depth: 0
 
     - name: Fetch tags
-      run: git fetch --tags
+      run: |
+        git fetch --tags
+        ls -all .
 
     - name: Fetch IPInfo GeoIP Database
       env:
@@ -51,6 +53,10 @@ jobs:
       run: |
         rm pkg/geoip/geoip.db
         wget -qO pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${IPINFO_TOKEN}
+        echo "===============1================"
+        ls -all ${{ github.workspace }}
+        echo "===============2================"
+        ls -all .
 
     - name: Set up Go
       uses: actions/setup-go@v5
