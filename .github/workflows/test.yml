@@ -10,13 +10,16 @@ on:
 jobs:
   build:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         goos: [linux, windows]
-        goarch: [amd64, arm64]
-        exclude:
-          - goos: windows
+        goarch: [amd64]
+        include:
+          - goos: linux
+            goarch: s390x
+          - goos: linux
             goarch: arm64
+
 
     runs-on: ubuntu-latest
     container:
@@ -25,6 +28,7 @@ jobs:
     env:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
+      GOARM: ${{ matrix.goarm }}
 
     steps:
     - name: Set up Git
@@ -41,6 +45,13 @@ jobs:
     - name: Fetch tags
       run: git fetch --tags
 
+    - name: Fetch IPInfo GeoIP Database
+      env:
+        IPINFO_TOKEN: ${{ secrets.IPINFO_TOKEN }}
+      run: |
+        rm pkg/geoip/geoip.db
+        wget -qO pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${IPINFO_TOKEN}
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
@@ -56,8 +67,9 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nezha-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: dist/*/*
+        name: dashboard-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            ./dist/*/*
 
   release:
     needs: build
@@ -80,7 +92,7 @@ jobs:
           fi
         done
 
-    - name: Create Release
+    - name: Release
       uses: ncipollo/release-action@v1
       with:
         artifacts: "assets/*/*/*.zip"
