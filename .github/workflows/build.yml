@@ -72,6 +72,7 @@ jobs:
           wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
           cd nezha/cmd/dashboard
           go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}" -tags=jsoniter
+          file dashboard
 
       - name: Fix dist
         run: |
