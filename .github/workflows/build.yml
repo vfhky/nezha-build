@@ -52,9 +52,9 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
-          release: 14.1
+          release: 13.2
           prepare: |
-            pkg install -y wget curl git go121 gcc bash jq node gawk gsed
+            pkg install -y wget curl git go121 gcc bash jq node
             ln -s /usr/local/bin/go121 /usr/local/bin/go
 
       - name: Build the project
@@ -71,7 +71,7 @@ jobs:
           rm -rf nezha/pkg/geoip/geoip.db
           wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
           cd nezha/cmd/dashboard
-          go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}" -tags=jsoniter
+          go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
           file dashboard
 
       - name: Fix dist
