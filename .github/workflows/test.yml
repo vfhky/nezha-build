@@ -28,6 +28,7 @@ jobs:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
       GOARM: ${{ matrix.goarm }}
+      DIST_DIR: ./dist
 
     steps:
     - name: Set up Git
@@ -79,13 +80,7 @@ jobs:
         apt-get install -y zip
 
     - name: Prepare dist directory
-      env:
-        DIST_DIR: ./dist
       run: |
-        # 列出 dist 目录
-        ls -all "${DIST_DIR}"
-        find . -type f
-
         # 查找并复制构建生成的二进制文件
         BINARY_PATH=$(find ./dist -type f -name "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}" | head -n 1)
 
