@@ -58,43 +58,43 @@ jobs:
             echo "====================1========================"
             file dashboard
 
+            # Create output directory
+            mkdir -p ../../output
+            mv dashboard ../../output/nezha-dashboard
+
             # Prepare dist
-            mkdir -p /tmp/dist
-            cp -rf ../../resource /tmp/dist
-            rm /tmp/dist/resource/resource.go
-            mv dashboard /tmp/dist/nezha-dashboard
-            echo "====================2========================"
+            cp -rf ../../resource ../../output/
+            rm ../../output/resource/resource.go
 
             # Prepare config.yaml
-            mkdir -p /tmp/dist/data
-            cp -rf ../../script/config.yaml /tmp/dist/data/config.yaml
-            echo "====================3========================"
+            mkdir -p ../../output/data
+            cp -rf ../../script/config.yaml ../../output/data/config.yaml
+
+            echo "====================2========================"
+            ls -R ../../output
 
             # Compress dist files
-            cd /tmp/dist
-            echo "====================4========================"
-            ls -all .
+            cd ../../output
             zip -qr nezha-dashboard.zip .
-            echo "====================5========================"
-            ls -all .
 
-            # Move artifacts to a location accessible outside the VM
-            mkdir -p /freebsd_artifacts
-            mv nezha-dashboard.zip /freebsd_artifacts/
-            echo "====================6========================"
-            ls -all  /freebsd_artifacts
+            echo "====================3========================"
+            ls -l
+
+            echo "====================4========================"
+            file nezha-dashboard
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: nezha-freebsd
-          path: /freebsd_artifacts/*
+          path: |
+            nezha/output/*
 
       - name: Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
-          artifacts: "/freebsd_artifacts/*.zip,/freebsd_artifacts/*.tar.gz"
+          artifacts: "nezha/output/*.zip"
           generateReleaseNotes: true
           makeLatest: legacy
           omitBody: false
