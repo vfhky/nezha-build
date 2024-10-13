@@ -38,21 +38,11 @@ jobs:
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
           echo "Version set to: ${VERSION}"
 
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: Setup FreeBSD environment
         uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
-          release: 13.2
+          release: 14.1
           prepare: |
             pkg install -y wget curl git go121 gcc bash jq node
             ln -s /usr/local/bin/go121 /usr/local/bin/go
