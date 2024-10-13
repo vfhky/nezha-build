@@ -55,6 +55,7 @@ jobs:
             wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
             cd nezha/cmd/dashboard
             go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
+            echo "====================1========================"
             file dashboard
 
             # Prepare dist
@@ -62,22 +63,22 @@ jobs:
             cp -rf ../../resource /tmp/dist
             rm /tmp/dist/resource/resource.go
             mv dashboard /tmp/dist/nezha-dashboard
+            echo "====================2========================"
 
             # Prepare config.yaml
             mkdir -p /tmp/dist/data
             cp -rf ../../script/config.yaml /tmp/dist/data/config.yaml
+            echo "====================3========================"
 
             # Compress dist files
             cd /tmp/dist
+            echo "====================3========================"
+            ls -all
             zip -qr nezha-dashboard.zip .
-            tar -czf nezha-dashboard.tar.gz .
 
             # Move artifacts to a location accessible outside the VM
             mkdir -p /freebsd_artifacts
-            mv nezha-dashboard.zip nezha-dashboard.tar.gz /freebsd_artifacts/
-
-            # Check the file type of the built binary
-            file /tmp/dist/nezha-dashboard
+            mv nezha-dashboard.zip /freebsd_artifacts/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
