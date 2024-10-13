@@ -69,17 +69,11 @@ jobs:
             mkdir -p ../../output/data
             cp -rf ../../script/config.yaml ../../output/data/config.yaml
 
-            echo "====================2========================"
-            ls -R ../../output
-
             # Compress dist files
             cd ../../output
 
             zip -qr nezha-dashboard.zip .
             mv nezha-dashboard.zip ..
-
-            echo "====================2.1========================"
-            ls -R ../../output
 
             tar -czf nezha-dashboard.tar.gz *
 
