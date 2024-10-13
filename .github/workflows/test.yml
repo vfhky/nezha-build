@@ -107,7 +107,6 @@ jobs:
         cd "${DIST_DIR}/dist-${{ matrix.goos }}-${{ matrix.goarch }}"
         ls -all ./
         zip -qr "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip" .
-        ls -all "${DIST_DIR}"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
