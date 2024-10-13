@@ -33,7 +33,6 @@ jobs:
               VERSION=$(curl -sL "https://api.github.com/repos/naiba/nezha/releases/latest" | jq -r .tag_name)
             fi
 
-            # 检查版本是否成功获取
             if [ -z "${VERSION}" ]; then
               echo "Error: VERSION could not be determined" >&2
               exit 1
@@ -75,10 +74,19 @@ jobs:
 
             # Compress dist files
             cd ../../output
-            zip -qr nezha-dashboard.zip .
 
+            zip -qr nezha-dashboard.zip .
+            mv nezha-dashboard.zip ..
+
+            echo "====================2.1========================"
+            ls -R ../../output
+
+            tar -czf nezha-dashboard.tar.gz *
+
+            # 将 zip 文件移回来
+            mv ../nezha-dashboard.zip .
             echo "====================3========================"
-            ls -l
+            ls -all
 
             echo "====================4========================"
             file nezha-dashboard
@@ -94,7 +102,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
-          artifacts: "nezha/output/*.zip"
+          artifacts: "nezha/output/*.zip,nezha/output/*.tar.gz"
           generateReleaseNotes: true
           makeLatest: legacy
           omitBody: false
