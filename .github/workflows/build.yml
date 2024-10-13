@@ -23,7 +23,7 @@ jobs:
           usesh: true
           release: 14.1
           prepare: |
-            pkg install -y wget curl git go121 gcc bash jq node zip tar
+            pkg install -y wget curl git go121 gcc bash jq node zip
             ln -s /usr/local/bin/go121 /usr/local/bin/go
           run: |
             # Set version
