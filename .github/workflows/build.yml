@@ -72,13 +72,17 @@ jobs:
 
             # Compress dist files
             cd /tmp/dist
-            echo "====================3========================"
-            ls -all
+            echo "====================4========================"
+            ls -all .
             zip -qr nezha-dashboard.zip .
+            echo "====================5========================"
+            ls -all .
 
             # Move artifacts to a location accessible outside the VM
             mkdir -p /freebsd_artifacts
             mv nezha-dashboard.zip /freebsd_artifacts/
+            echo "====================6========================"
+            ls -all  /freebsd_artifacts
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
