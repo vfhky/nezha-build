@@ -104,9 +104,11 @@ jobs:
     - name: Compress artifacts into zip
       run: |
         ls -all ./
+        current_dir=$(pwd)
         cd "${DIST_DIR}/dist-${{ matrix.goos }}-${{ matrix.goarch }}"
         ls -all ./
-        zip -qr "dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip" .
+        zip -qr "${current_dir}/dist/dashboard-${{ matrix.goos }}-${{ matrix.goarch }}.zip" .
+        ls -all "${current_dir}"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
