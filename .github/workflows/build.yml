@@ -93,18 +93,12 @@ jobs:
             echo "====================0 go build ========================"
             go mod tidy
             go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
-            echo "====================0 list all ========================"
-            ls -all
-            echo "====================1========================"
+            echo "====================1 file dashboard ========================"
             file dashboard
 
             # Create output directory
             mkdir -p ../../output
             mv dashboard ../../output/nezha-dashboard
-
-            # Prepare dist
-            cp -rf ../../resource ../../output/
-            rm ../../output/resource/resource.go
 
             # Prepare config.yaml
             mkdir -p ../../output/data
@@ -118,7 +112,6 @@ jobs:
 
             tar -czf nezha-dashboard.tar.gz *
 
-            # 
             mv ../nezha-dashboard.zip .
             echo "====================3========================"
             ls -all
