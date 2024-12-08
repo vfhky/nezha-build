@@ -78,6 +78,8 @@ jobs:
             # Build the project
             cd nezha/cmd/dashboard
             go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
+            echo "====================0 list all ========================"
+            ls -all
             echo "====================1========================"
             file dashboard
 
@@ -101,7 +103,7 @@ jobs:
 
             tar -czf nezha-dashboard.tar.gz *
 
-            # 将 zip 文件移回来
+            # ?? zip ???????
             mv ../nezha-dashboard.zip .
             echo "====================3========================"
             ls -all
