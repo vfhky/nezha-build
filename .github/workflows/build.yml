@@ -75,15 +75,18 @@ jobs:
             rm -rf nezha/pkg/geoip/geoip.db
             wget -qO nezha/pkg/geoip/geoip.db https://ipinfo.io/data/free/country.mmdb?token=${{ secrets.IPINFO_TOKEN }}
             
+            echo "====================0 Install Swag for Swagger docs ========================"
             # Install Swag for Swagger docs
             go install github.com/swaggo/swag/cmd/swag@latest
             
+            echo "====================0 Install Swag init ========================"
             # Generate Swagger docs
             cd nezha
             swag init --pd -d . -g ./cmd/dashboard/main.go -o ./cmd/dashboard/docs --parseGoList=false
             
             # Build the project
             cd cmd/dashboard
+            echo "====================0 go build ========================"
             go mod tidy
             go build -ldflags="-s -w --extldflags '-static -fpic' -X github.com/naiba/nezha/service/singleton.Version=${version_num}"
             echo "====================0 list all ========================"
@@ -111,7 +114,7 @@ jobs:
 
             tar -czf nezha-dashboard.tar.gz *
 
-            # 将 zip 文件移回来
+            # ?? zip ???????
             mv ../nezha-dashboard.zip .
             echo "====================3========================"
             ls -all
