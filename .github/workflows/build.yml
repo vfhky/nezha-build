@@ -79,10 +79,14 @@ jobs:
             # Install Swag for Swagger docs
             go install github.com/swaggo/swag/cmd/swag@latest
             
+            # Ensure Swag is in PATH
+            export PATH=$PATH:$(go env GOPATH)/bin
+
+            
             echo "====================0 Install Swag init ========================"
             # Generate Swagger docs
             cd nezha
-            swag init --pd -d . -g ./cmd/dashboard/main.go -o ./cmd/dashboard/docs --parseGoList=false
+            $(go env GOPATH)/bin/swag init --pd -d . -g ./cmd/dashboard/main.go -o ./cmd/dashboard/docs --parseGoList=false
             
             # Build the project
             cd cmd/dashboard
@@ -114,7 +118,7 @@ jobs:
 
             tar -czf nezha-dashboard.tar.gz *
 
-            # ?? zip ???????
+            # 
             mv ../nezha-dashboard.zip .
             echo "====================3========================"
             ls -all
