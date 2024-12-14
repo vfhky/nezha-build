@@ -53,23 +53,31 @@ jobs:
             # Clean old dist directories
             rm -rf nezha/cmd/dashboard/*-dist
             
-            # Download and prepare admin-frontend
-            wget -q https://github.com/nezhahq/admin-frontend/releases/download/v1.1/dist.zip -O admin-dist.zip
-            unzip -q admin-dist.zip
-            mv dist nezha/cmd/dashboard/admin-dist
-            rm admin-dist.zip
+            download_latest_release() {
+              local repo=$1
+              local dist_dir=$2
+              echo "Downloading latest release from ${repo}..."
+              
+              # Get latest release tag
+              local latest_tag=$(curl -sL "https://api.github.com/repos/${repo}/releases/latest" | jq -r .tag_name)
+              if [ -z "${latest_tag}" ] || [ "${latest_tag}" = "null" ]; then
+                echo "Error: Could not determine latest tag for ${repo}" >&2
+                exit 1
+              fi
+              echo "Latest tag for ${repo}: ${latest_tag}"
+              
+              # Download and extract
+              wget -q "https://github.com/${repo}/releases/download/${latest_tag}/dist.zip" -O temp_dist.zip
+              unzip -q temp_dist.zip
+              mv dist "nezha/cmd/dashboard/${dist_dir}"
+              rm temp_dist.zip
+              echo "Successfully prepared ${dist_dir}"
+            }
             
-            # Download and prepare user-frontend
-            wget -q https://github.com/nezhahq/user-frontend/releases/download/v1.1.0/dist.zip -O user-dist.zip
-            unzip -q user-dist.zip
-            mv dist nezha/cmd/dashboard/user-dist
-            rm user-dist.zip
-            
-            # Download and prepare nazhua-frontend
-            wget -q https://github.com/hi2shark/nazhua/releases/download/v0.4.3/dist.zip -O nazhua-dist.zip
-            unzip -q nazhua-dist.zip
-            mv dist nezha/cmd/dashboard/nazhua-dist
-            rm nazhua-dist.zip
+            # Download all frontend dependencies
+            download_latest_release "nezhahq/admin-frontend" "admin-dist"
+            download_latest_release "nezhahq/user-frontend" "user-dist"
+            download_latest_release "hi2shark/nazhua" "nazhua-dist"
             
             # Download GeoIP database
             rm -rf nezha/pkg/geoip/geoip.db
@@ -102,7 +110,8 @@ jobs:
 
             # Prepare config.yaml
             mkdir -p ../../output/data
-            cp -rf ../../script/config.yaml ../../output/data/config.yaml
+            #cp -rf ../../script/config.yaml ../../output/data/config.yaml
+            wget -qO ../../output/data/config.yaml "https://raw.githubusercontent.com/nezhahq/scripts/main/extras/config.yaml"
 
             # Compress dist files
             cd ../../output
@@ -120,7 +129,7 @@ jobs:
             file nezha-dashboard
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nezha-freebsd
           path: |
