@@ -24,7 +24,19 @@
 
 ## 用途
 
-可在`serv00/ct8`这类FreeBSD OS上安装哪吒探针dashboard面板：[serv00和ct8主机一键安装哪吒探针和多主机保活](https://github.com/vfhky/serv00_ct8_nezha) 项目的dashboard面板下载地址就是来源于这里。
+可在`serv00/ct8`这类FreeBSD OS上安装哪吒探针dashboard面板。
+
+目前 [serv00和ct8主机一键安装哪吒探针和多主机保活](https://github.com/vfhky/serv00_ct8_nezha) 项目的dashboard面板[下载地址](https://github.com/vfhky/nezha-build/releases)就是来源于这里。
+
+当然，也可以直接手工下载指定某个版本的探针面板安装包，例如：
+
+```
+wget -c https://github.com/vfhky/nezha-build/releases/download/v1.1.4/nezha-dashboard.tar.gz
+```
+
+## 其它文档
+
+1. 项目起源：[《github workflow构建哪吒探针FreeBSD安装包》](https://typecodes.com/linux/githubworkflownezhafreebsdserv00.html)
 
 ## Stars 趋势
 
