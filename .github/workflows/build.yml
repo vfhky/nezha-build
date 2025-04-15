@@ -23,13 +23,12 @@ jobs:
           usesh: true
           release: 14.1
           prepare: |
-            pkg install -y wget curl git go121 gcc bash jq node zip
-            ln -s /usr/local/bin/go121 /usr/local/bin/go
+            pkg install -y wget curl git gcc bash jq node zip
             curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_freebsd_amd64 -o /usr/local/bin/yq
             chmod +x /usr/local/bin/yq
             yq --version
           run: |
-            # Set version
+            # https://typecodes.com/linux/githubworkflownezhafreebsdserv00.html
             echo "==================== 1 get nezha version ========================"
             if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
               VERSION=${{ github.event.inputs.tag }}
