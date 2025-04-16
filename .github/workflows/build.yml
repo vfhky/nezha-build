@@ -23,7 +23,7 @@ jobs:
           usesh: true
           release: 14.1
           prepare: |
-            pkg install -y wget curl git gcc bash jq node zip
+            pkg install -y wget curl git gcc bash jq node zip go
             curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_freebsd_amd64 -o /usr/local/bin/yq
             chmod +x /usr/local/bin/yq
             yq --version
