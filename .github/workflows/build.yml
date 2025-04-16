@@ -23,7 +23,11 @@ jobs:
           usesh: true
           release: 14.1
           prepare: |
-            pkg install -y wget curl git gcc bash jq node zip go
+            pkg install -y wget curl git gcc bash jq node zip
+            fetch https://go.dev/dl/go1.22.0.freebsd-amd64.tar.gz
+            rm -rf /usr/local/go
+            tar -C /usr/local -xzf go1.22.0.freebsd-amd64.tar.gz
+            export PATH=$PATH:/usr/local/go/bin
             curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_freebsd_amd64 -o /usr/local/bin/yq
             chmod +x /usr/local/bin/yq
             yq --version
